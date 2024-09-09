@@ -1,0 +1,19 @@
+name: 'Pipeline'
+
+# Do not run when PR is created - only after it is merged into one of these branches
+# main branch is prod
+on:
+    push:
+      branches:
+        - main
+        - stage
+
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: 'Pipeline: ${{ github.ref_name }}'
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main' || github.ref_name == 'stage'    
