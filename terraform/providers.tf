@@ -9,22 +9,24 @@ terraform {
   }
 }
 
-# We use the remote backend state to retrieve the outputs created by xyz_infra_poc
+# We use the remote backend state to retrieve the infrastructure outputs created by xyz_infra_poc
+# We must pull from the appropriate workspace that corresponds to the environment stage we are deploying
+# Terraform is weird and won't accept a `workspace` argument, so instead we use it to form the S3 key
 data "terraform_remote_state" "infra" {
   backend = "s3"
   config = {
-    bucket     = "seliot-terraform-state-bucket"
-    key        = "xyz_infra_poc/terraform.tfstate"
-    region     = "us-east-1"
+    bucket    = "seliot-terraform-state-bucket"
+    key       = "env:/${var.workspace}/xyz_infra_poc/terraform.tfstate"
+    region    = "us-east-1"
   }
 }
 
-# Using the cluster name from the remote backend state, we retrieve the cluster endpoint and certificate data
+# Using the cluster name from the remote backend state, we retrieve data about the EKS cluster
 data "aws_eks_cluster" "cluster" {
-  name = data.terraform_remote_state.eks.outputs.cluster_name
+  name = data.terraform_remote_state.infra.outputs.eks_cluster_name
 }
 
-# Define the kubernetes provider using the aws_eks_cluster defined above.
+# Define the kubernetes provider using the data from the EKS cluster
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)

@@ -4,9 +4,15 @@ variable "env_name" {
   type        = string
 }
 
+# Terraform workspace to use
+variable "workspace" {
+  description = "unknown"
+  type        = string
+}
+
 # Define a variable for the image.
 variable "app_image" {
   description = "App Image"
   type        = string
-  default = "setheliot/xyz-demo-app:latest"
+  default     = "ghcr.io/setheliot/xyz-demo-app:latest"
 }

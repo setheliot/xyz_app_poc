@@ -3,7 +3,7 @@ locals {
   appname = "XYZDemoApp-${var.env_name}"
 }
 
-# This defines the kubernetes deployment for the demo app
+# This defines the kubernetes deployment for the XYZ app
 resource "kubernetes_deployment" "xyz-demo-app" {
   metadata {
     name = "xyz-demo-app-${var.env_name}"
@@ -13,7 +13,7 @@ resource "kubernetes_deployment" "xyz-demo-app" {
   }
 
   spec {
-    replicas = 2
+    replicas = 3
     selector {
       match_labels = {
         App = local.appname
@@ -57,7 +57,7 @@ resource "kubernetes_service" "xyz-demo-elb" {
     name = "xyz-demo-elb-prod"
     annotations = {
       "service.beta.kubernetes.io/aws-load-balancer-type" = "nlb"
-    }    
+    }
   }
   spec {
     selector = {
@@ -65,7 +65,7 @@ resource "kubernetes_service" "xyz-demo-elb" {
     }
     port {
       port        = 80
-      target_port = 80
+      target_port = 8080
     }
 
     type = "LoadBalancer"
@@ -74,5 +74,5 @@ resource "kubernetes_service" "xyz-demo-elb" {
 
 output "lb_ip" {
   description = "Load Balancer Endpoint"
-  value = kubernetes_service.xyz-demo-elb.status.0.load_balancer.0.ingress.0.hostname
+  value       = kubernetes_service.xyz-demo-elb.status.0.load_balancer.0.ingress.0.hostname
 }
