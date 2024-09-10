@@ -44,7 +44,16 @@ resource "kubernetes_deployment" "xyz-demo-app" {
               memory = "50Mi"
             }
           }
-        }
+          # Add environment variable using Kubernetes Downward API to get node name
+          env {
+            name = "NODE_NAME"
+            value_from {
+              field_ref {
+                field_path = "spec.nodeName"
+              }
+            }
+          }          
+        } #container
       }
     }
   }
