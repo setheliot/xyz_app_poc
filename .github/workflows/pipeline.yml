@@ -32,7 +32,7 @@ jobs:
     steps:
       # Checkout the code.
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       ########################
       # Run unit tests 
@@ -112,7 +112,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Generate version label for the image
       - name: Set Short SHA
@@ -157,6 +157,6 @@ jobs:
 
       - name: Terraform Apply
         run: | 
-          terraform apply -auto-approve -input=false 
-          -var="app_image=ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}" 
+          terraform apply -auto-approve -input=false \
+          -var="app_image=ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}" \
           -var-file=environment/${{ github.ref_name }}.tfvars
