@@ -28,7 +28,16 @@ jobs:
       run:
         shell: bash
 
+
     steps:
+      #Debugging
+      - name: Check current directory
+        run: pwd
+    
+      - name: List files in current directory
+        run: ls -al
+    
+
       # DELETE THIS
       # Docker login to GHCR - needed to be able to push image
       # We do not need this is Codespaces access is configured.  This gives direct access by this repo
