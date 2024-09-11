@@ -94,11 +94,12 @@ jobs:
           tags: ghcr.io/setheliot/xyz-demo-app:latest,ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}
 
 
-    ######################
+  ######################
 
 
   terraform:
     name: 'Terraform: ${{ github.ref_name }}'
+    needs: build  # This ensures terraform runs after build completes
     runs-on: ubuntu-latest
     if: github.ref_name == 'main' || github.ref_name == 'stage'    
 
@@ -129,7 +130,7 @@ jobs:
 
       # Setup Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3
 
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
       - name: Terraform Init
@@ -139,9 +140,7 @@ jobs:
       - name: Terraform Format
         run: terraform fmt -check
 
-      # If the workspace does not exist, then something is wrong. It is likely the infrastructure
-      # was not deployed correctly
-      # (consider replacing the workspace based environment logic with Terragrunt later)
+      # If the workspace does not exist, then create it
       - name: Ensure workspace exists for this branch (for this environment)
         run: |
           if ! terraform workspace list | grep -q "${{ github.ref_name }}"; then
