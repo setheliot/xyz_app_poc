@@ -17,8 +17,8 @@ env:
   SHA_SHORT: "latest"
 
 jobs:
-  build:
-    name: 'Build: ${{ github.ref_name }}'
+  test:
+    name: 'Test: ${{ github.ref_name }}'
     runs-on: ubuntu-latest
     if: github.ref_name == 'main' || github.ref_name == 'stage'    
 
@@ -28,6 +28,10 @@ jobs:
       run:
         shell: bash
 
+
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
       # Checkout the code.
@@ -39,8 +43,8 @@ jobs:
       ########################
 
       # Init python, install dependencies, and test our app.
-      - name: Initialize Python 3.7
-        uses: actions/setup-python@v1
+      - name: Initialize Python versions
+        uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.python-version}}
       
@@ -53,16 +57,33 @@ jobs:
         run: |
           pytest src/
 
-      # Generate a SBOM with Anchore.
-      # An SBOM (Software Bill of Materials) is a detailed list of all components, libraries, 
-      # and dependencies that make up a software project. It is useful for security purposes, auditing
-      - uses: anchore/sbom-action@v0
-        with:
-          path: ./      
+  build:
+    name: 'Build: ${{ github.ref_name }}'
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main' || github.ref_name == 'stage'    
 
+    environment: ${{ github.ref_name == 'stage' && 'stage' || github.ref_name == 'main' && 'prod' || 'unknown' }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout the code.
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       ########################
       # Build and push image
       ########################
+
+      # Generate a SBOM with Anchore.
+      # An SBOM (Software Bill of Materials) is a detailed list of all components, libraries, 
+      # and dependencies that make up a software project. It is useful for security purposes, auditing
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: ./      
 
       # create and boot a builder for multi-platform images
       - name: Set up Docker Buildx
