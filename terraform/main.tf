@@ -52,7 +52,7 @@ resource "kubernetes_deployment" "xyz-demo-app" {
                 field_path = "spec.nodeName"
               }
             }
-          }          
+          }
         } #container
       }
     }

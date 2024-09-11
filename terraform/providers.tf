@@ -15,9 +15,9 @@ terraform {
 data "terraform_remote_state" "infra" {
   backend = "s3"
   config = {
-    bucket    = "seliot-terraform-state-bucket"
-    key       = "env:/${var.workspace}/xyz_infra_poc/terraform.tfstate"
-    region    = "us-east-1"
+    bucket = "seliot-terraform-state-bucket"
+    key    = "env:/${var.workspace}/xyz_infra_poc/terraform.tfstate"
+    region = "us-east-1"
   }
 }
 
