@@ -33,7 +33,7 @@ It is deployed with a desired replica count of 3 pods.
 
 The pipeline automation here currently only supports `stage` and `prod` environments.
 
-The AWS Regions for the each of these should be different and match those of the infrastructure for the respective environments. You configure the Regions to use in [`stage.tfvars`](terraform/environment/stage.tfvars) and  [`main.tfvars`](terraform/environment/main.tfvars) respectively.
+The AWS Region will be automatically configured to use the same one that the infrastrucure was deployed to for each environment respectively.
 
 Developers create their own `dev` branches to work in (using their own accounts as environments) and then create pull requests from these into `stage`
 
@@ -60,7 +60,6 @@ The following [GitHub environments for deployment](https://docs.github.com/en/ac
 1. Create an IAM User in the same AWS account used for the infrastructure that has the necessary credentials (see [below](#future-plans)). Enter `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` values for that IAM User in GitHub secrets (Settings ➡ Secrets and variables ➡ Actions ➡ New repository secret)
 1. Generate a [GitHub Personal Access Token (PAT)](https://github.com/settings/tokens) with the following scopes:  `delete:packages`, `repo`, `write:packages`. Then enter this token into GitHub Secrets for the repo as `GHCR_TOKEN`. 
 1. Update the `bucket` name, `dynamodb_table` name, and AWS `region` values in [`providers.tf`](terraform/providers.tf) under  _both_ the **Infrastructure remote backend** and **App Remote backend** settings to be the ***same*** as those used for the infrastructure pipeline.
-1. [if necessary] Update [`stage.tfvars`](terraform/environment/stage.tfvars) and [`main.tfvars`](terraform/environment/main.tfvars) to set the `aws_region` to the _same__ used for the staging and production deployments of the infrastructure.
 1. The staging environment app will automatically build and deploy to the staging infrastructure when you merge a pull request into branch `stage`.
 1. The production environment app will automatically build and deploy to the production infrastructure when you merge a pull request from branch `stage` into branch `main`.
 
