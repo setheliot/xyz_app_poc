@@ -115,9 +115,9 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/setheliot/xyz-demo-app:latest, 
-            ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}, 
+          tags:
+            ghcr.io/setheliot/xyz-demo-app:latest
+            ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}
             ghcr.io/setheliot/xyz-demo-app:${{env.ENVIRONMENT}}
 
   ######################
