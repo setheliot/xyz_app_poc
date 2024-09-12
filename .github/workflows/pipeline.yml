@@ -19,7 +19,7 @@ env:
 
 jobs:
   test:
-    name: 'Test: ${{ github.ref_name }}'
+    name: 'Test: ${{ github.ref_name }} - Python ${{matrix.python-version}}'
     runs-on: ubuntu-latest
     if: github.ref_name == 'main' || github.ref_name == 'stage'
 
@@ -116,8 +116,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags:
-            ghcr.io/setheliot/xyz-demo-app:latest
-            ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}
+            ghcr.io/setheliot/xyz-demo-app:latest,
+            ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}},
             ghcr.io/setheliot/xyz-demo-app:${{env.ENVIRONMENT}}
 
   ######################
