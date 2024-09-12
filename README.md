@@ -43,6 +43,9 @@ Three GitHub actions workflows are defined:
    1. Runs tests on the application
    2. Builds the application docker image and pushes it to the container registry
    3. Deploys the application from the docker image into the EKS (Kubernetes) cluster created  by the [xyz_infra_poc](https://github.com/setheliot/xyz_infra_poc) pipeline.
+
+  ![github_pipeline](images/github_pipeline.JPG)
+
 - **Enforce Flow** ([`enforce-flow.yml`](.github/workflows/enforce-flow.yml)) enforces the order in which changes flow through the environments in the pipeline. Currently with only the two environments, it enforces that `prod` will only accept merges from `stage`. It also checks that all tests in the previous environment have passed before accepting the merge.
 - **Environment Tests** ([`ci.yml`](.github/workflows/ci.yml)) runs tests applicable to _every_ environment. The workflow currently runs unit tests on the application, but serves as a placeholder to add future tests. Note: **Stage Tests** and **Prod Tests** workflows can similarly be created for tests that only apply to a specific environment.
 
@@ -66,7 +69,7 @@ The following [GitHub environments for deployment](https://docs.github.com/en/ac
 ## Future plans
 All of the [future plans for the infrastructure repo](https://github.com/setheliot/xyz_infra_poc?tab=readme-ov-file#future-plans) also apply here. Additionally:
 - Provide a sample IAM Policy for AWS credentials required here that follows the principle of least-privilege
-- Add a GitHub actions step to dynamically update this readme with the application url for all `stage` and `prod`.
+- Add a GitHub actions step to dynamically update this readme with the application url for `stage` and `prod`.
 - Add automation to check if the infrastructure pipeline successfully deployed the infrastructure
 - Make the docker image private and enable Terraform to access it using the `kubernetes_secret` resource. In this case we would need pass in the GitHub Personal Access token and username from GitHub secrets using the `-var` argument on `terraform apply`.
 
