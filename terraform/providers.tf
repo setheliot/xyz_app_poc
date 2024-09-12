@@ -1,3 +1,4 @@
+# App remote backend
 # Remote backend for storing Terraform state for this deployment (the app)
 terraform {
   backend "s3" {
@@ -9,6 +10,7 @@ terraform {
   }
 }
 
+# Infrastructure remote backend
 # We use the remote backend state to retrieve the infrastructure outputs created by xyz_infra_poc
 # We must pull from the appropriate workspace that corresponds to the environment stage we are deploying
 # Terraform is weird and won't accept a `workspace` argument, so instead we use it to form the S3 key

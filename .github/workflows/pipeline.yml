@@ -15,32 +15,38 @@ permissions:
 env:
   RELEASE_REVISION: "pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}"
   SHA_SHORT: "latest"
+  ENVIRONMENT: ${{ github.ref_name == 'stage' && 'stage' || github.ref_name == 'main' && 'prod' || 'unknown' }}
 
 jobs:
-  build:
-    name: 'Build: ${{ github.ref_name }}'
+  test:
+    name: 'Test: ${{ github.ref_name }} - Python ${{matrix.python-version}}'
     runs-on: ubuntu-latest
-    if: github.ref_name == 'main' || github.ref_name == 'stage'    
+    if: github.ref_name == 'main' || github.ref_name == 'stage'
 
+    # (would like to use env.ENVIRONMENT here, but it is not allowed)
     environment: ${{ github.ref_name == 'stage' && 'stage' || github.ref_name == 'main' && 'prod' || 'unknown' }}
 
     defaults:
       run:
         shell: bash
 
+    # run tests on mutliple versions of Python
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9]
 
     steps:
       # Checkout the code.
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       ########################
       # Run unit tests 
       ########################
 
       # Init python, install dependencies, and test our app.
-      - name: Initialize Python 3.7
-        uses: actions/setup-python@v1
+      - name: Initialize Python versions
+        uses: actions/setup-python@v5
         with:
           python-version: ${{matrix.python-version}}
       
@@ -53,16 +59,34 @@ jobs:
         run: |
           pytest src/
 
-      # Generate a SBOM with Anchore.
-      # An SBOM (Software Bill of Materials) is a detailed list of all components, libraries, 
-      # and dependencies that make up a software project. It is useful for security purposes, auditing
-      - uses: anchore/sbom-action@v0
-        with:
-          path: ./      
+  build:
+    name: 'Build: ${{ github.ref_name }}'
+    needs: test # do not build if tests fail
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main' || github.ref_name == 'stage'    
+
+    environment: ${{ github.ref_name == 'stage' && 'stage' || github.ref_name == 'main' && 'prod' || 'unknown' }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout the code.
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       ########################
       # Build and push image
       ########################
+
+      # Generate a SBOM with Anchore.
+      # An SBOM (Software Bill of Materials) is a detailed list of all components, libraries, 
+      # and dependencies that make up a software project. It is useful for security purposes, auditing
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: ./      
 
       # create and boot a builder for multi-platform images
       - name: Set up Docker Buildx
@@ -91,14 +115,16 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/setheliot/xyz-demo-app:latest,ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}
+          tags:
+            ghcr.io/setheliot/xyz-demo-app:latest,
+            ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}},
+            ghcr.io/setheliot/xyz-demo-app:${{env.ENVIRONMENT}}
 
-
-    ######################
-
+  ######################
 
   terraform:
     name: 'Terraform: ${{ github.ref_name }}'
+    needs: build  # This ensures terraform runs after build completes
     runs-on: ubuntu-latest
     if: github.ref_name == 'main' || github.ref_name == 'stage'    
 
@@ -111,7 +137,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Generate version label for the image
       - name: Set Short SHA
@@ -129,7 +155,7 @@ jobs:
 
       # Setup Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3
 
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
       - name: Terraform Init
@@ -139,9 +165,7 @@ jobs:
       - name: Terraform Format
         run: terraform fmt -check
 
-      # If the workspace does not exist, then something is wrong. It is likely the infrastructure
-      # was not deployed correctly
-      # (consider replacing the workspace based environment logic with Terragrunt later)
+      # If the workspace does not exist, then create it
       - name: Ensure workspace exists for this branch (for this environment)
         run: |
           if ! terraform workspace list | grep -q "${{ github.ref_name }}"; then
@@ -158,6 +182,6 @@ jobs:
 
       - name: Terraform Apply
         run: | 
-          terraform apply -auto-approve -input=false 
-          -var="app_image=ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}" 
+          terraform apply -auto-approve -input=false \
+          -var="app_image=ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}" \
           -var-file=environment/${{ github.ref_name }}.tfvars
