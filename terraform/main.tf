@@ -59,7 +59,7 @@ resource "kubernetes_deployment" "xyz-demo-app" {
   }
 }
 
-# Define a load balancer for our demo app.
+# Define a load balancer (NLB) for our demo app.
 
 resource "kubernetes_service" "xyz-demo-elb" {
   metadata {

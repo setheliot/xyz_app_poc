@@ -15,23 +15,25 @@ permissions:
 env:
   RELEASE_REVISION: "pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}"
   SHA_SHORT: "latest"
+  ENVIRONMENT: ${{ github.ref_name == 'stage' && 'stage' || github.ref_name == 'main' && 'prod' || 'unknown' }}
 
 jobs:
   test:
     name: 'Test: ${{ github.ref_name }}'
     runs-on: ubuntu-latest
-    if: github.ref_name == 'main' || github.ref_name == 'stage'    
+    if: github.ref_name == 'main' || github.ref_name == 'stage'
 
+    # (would like to use env.ENVIRONMENT here, but it is not allowed)
     environment: ${{ github.ref_name == 'stage' && 'stage' || github.ref_name == 'main' && 'prod' || 'unknown' }}
 
     defaults:
       run:
         shell: bash
 
-
+    # run tests on mutliple versions of Python
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9]
 
     steps:
       # Checkout the code.
@@ -59,6 +61,7 @@ jobs:
 
   build:
     name: 'Build: ${{ github.ref_name }}'
+    needs: test # do not build if tests fail
     runs-on: ubuntu-latest
     if: github.ref_name == 'main' || github.ref_name == 'stage'    
 
@@ -72,7 +75,7 @@ jobs:
       # Checkout the code.
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       ########################
       # Build and push image
       ########################
@@ -112,11 +115,12 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/setheliot/xyz-demo-app:latest,ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}
-
+          tags: |
+            ghcr.io/setheliot/xyz-demo-app:latest, 
+            ghcr.io/setheliot/xyz-demo-app:${{env.SHA_SHORT}}, 
+            ghcr.io/setheliot/xyz-demo-app:${{env.ENVIRONMENT}}
 
   ######################
-
 
   terraform:
     name: 'Terraform: ${{ github.ref_name }}'
