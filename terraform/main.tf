@@ -65,7 +65,8 @@ resource "kubernetes_service" "xyz-demo-elb" {
   metadata {
     name = "xyz-demo-elb-prod"
     annotations = {
-      "service.beta.kubernetes.io/aws-load-balancer-type" = "nlb"
+      "service.beta.kubernetes.io/aws-load-balancer-type"                     = "nlb"
+      "service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags" = "Terraform=true,Environment=${var.env_name}"
     }
   }
   spec {
