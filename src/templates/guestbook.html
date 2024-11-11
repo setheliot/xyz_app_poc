@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Guestbook Entry</title>
+        <style>
+            /* Style the form fields to left-align them */
+            form {
+                text-align: left;
+            }
+            label, input, textarea {
+                display: block;
+                margin-bottom: 8px;
+            }
+            input[type="text"], textarea {
+                width: 100%;
+                max-width: 300px; /* Optional: Limit the width of the input fields */
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Running on node: {{ node_name }}, in AWS Region: {{ region }}</h2>
+        <h2><br/>Please sign the guest book</h2>
+        <form action="/" method="post">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="message">Message:</label>
+            <textarea id="message" name="message" required></textarea>
+            
+            <input type="submit" value="Submit">
+        </form>
+        
+        <h2>Current Guestbook Entries:</h2>
+        {% if entries %}
+            <ul>
+                {% for entry in entries %}
+                    <li><strong>{{ entry['Name'] }}</strong>: {{ entry['Message'] }} (UUID: {{ entry['GuestID'] }})</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No entries yet.</p>
+        {% endif %}
+    </body>
+</html>

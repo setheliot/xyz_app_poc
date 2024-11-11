@@ -23,12 +23,14 @@ data "terraform_remote_state" "infra" {
   }
 }
 
-# This tells Terraform which AWS region to look in for the EKS cluster
+# Get the AWS Region from the infrastructure remote backend state
 locals {
   region = data.terraform_remote_state.infra.outputs.aws_region
 }
+
+# This tells Terraform which AWS region to look in for the EKS cluster
 provider "aws" {
-  region = locals.region
+  region = local.region
 }
 
 # Using the cluster name from the remote backend state, we retrieve data about the EKS cluster
