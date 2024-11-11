@@ -53,6 +53,11 @@ resource "kubernetes_deployment" "xyz-demo-app" {
               }
             }
           }
+          # Add environment variable for the region
+          env {
+            name  = "AWS_REGION"
+            value = local.region # This is the region where the EKS cluster is deployed
+          }          
         } #container
       }
     }
