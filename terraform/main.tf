@@ -57,7 +57,7 @@ resource "kubernetes_deployment" "xyz-demo-app" {
           env {
             name  = "AWS_REGION"
             value = local.region # This is the region where the EKS cluster is deployed
-          }          
+          }
         } #container
       }
     }
