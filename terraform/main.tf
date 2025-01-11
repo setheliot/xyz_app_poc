@@ -4,9 +4,9 @@ locals {
 }
 
 # This defines the kubernetes deployment for the XYZ app
-resource "kubernetes_deployment" "xyz-demo-app" {
+resource "kubernetes_deployment" "xyz_deployment_app" {
   metadata {
-    name = "xyz-demo-app-${var.env_name}"
+    name = "xyz-deployment-app-${var.env_name}"
     labels = {
       app = local.appname
     }
@@ -28,7 +28,7 @@ resource "kubernetes_deployment" "xyz-demo-app" {
       spec {
         container {
           image = var.app_image
-          name  = "xyzdemoapp-container-${var.env_name}"
+          name  = "xyz-container-app-${var.env_name}"
 
           port {
             container_port = 80
@@ -65,9 +65,9 @@ resource "kubernetes_deployment" "xyz-demo-app" {
 }
 
 # Kubernetes Ingress Resource for ALB via AWS Load Balancer Controller
-resource "kubernetes_ingress_v1" "xyz_demo_alb" {
+resource "kubernetes_ingress_v1" "xyz_ingress_alb" {
   metadata {
-    name      = "xyz-demo-alb-${var.env_name}"
+    name      = "xyz-ingress-alb-${var.env_name}"
     namespace = "default"
     annotations = {
       "kubernetes.io/ingress.class"                        = "alb"
@@ -89,7 +89,7 @@ resource "kubernetes_ingress_v1" "xyz_demo_alb" {
 
           backend {
             service {
-              name = kubernetes_service_v1.xyz_demo_svc.metadata[0].name
+              name = kubernetes_service_v1.xyz_service_alb.metadata[0].name
               port {
                 number = 8080
               }
@@ -102,9 +102,9 @@ resource "kubernetes_ingress_v1" "xyz_demo_alb" {
 }
 
 # Kubernetes Service for the App
-resource "kubernetes_service_v1" "xyz_demo_svc" {
+resource "kubernetes_service_v1" "xyz_service_alb" {
   metadata {
-    name      = "xyz-demo-svc-${var.env_name}"
+    name      = "xyz-service-alb-${var.env_name}"
     namespace = "default"
     labels = {
       app = local.appname
@@ -128,9 +128,9 @@ resource "kubernetes_service_v1" "xyz_demo_svc" {
 output "alb_dns_name" {
   description = "Application Load Balancer DNS Name"
   value = (
-    length(kubernetes_ingress_v1.xyz_demo_alb.status) > 0 &&
-    length(kubernetes_ingress_v1.xyz_demo_alb.status[0].load_balancer) > 0 &&
-    length(kubernetes_ingress_v1.xyz_demo_alb.status[0].load_balancer[0].ingress) > 0
-  ) ? kubernetes_ingress_v1.xyz_demo_alb.status[0].load_balancer[0].ingress[0].hostname : "ALB is still provisioning"
+    length(kubernetes_ingress_v1.xyz_ingress_alb.status) > 0 &&
+    length(kubernetes_ingress_v1.xyz_ingress_alb.status[0].load_balancer) > 0 &&
+    length(kubernetes_ingress_v1.xyz_ingress_alb.status[0].load_balancer[0].ingress) > 0
+  ) ? kubernetes_ingress_v1.xyz_ingress_alb.status[0].load_balancer[0].ingress[0].hostname : "ALB is still provisioning"
 }
 
