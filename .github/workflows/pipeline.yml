@@ -33,7 +33,7 @@ jobs:
     # run tests on mutliple versions of Python
     strategy:
       matrix:
-        python-version: [3.10, 3.11]
+        python-version: ["3.10", "3.11"]
 
     steps:
       # Checkout the code.
