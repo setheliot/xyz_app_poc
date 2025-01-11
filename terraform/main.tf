@@ -8,7 +8,7 @@ resource "kubernetes_deployment" "xyz-demo-app" {
   metadata {
     name = "xyz-demo-app-${var.env_name}"
     labels = {
-      App = local.appname
+      app = local.appname
     }
   }
 
@@ -16,13 +16,13 @@ resource "kubernetes_deployment" "xyz-demo-app" {
     replicas = 3
     selector {
       match_labels = {
-        App = local.appname
+        app = local.appname
       }
     }
     template {
       metadata {
         labels = {
-          App = local.appname
+          app = local.appname
         }
       }
       spec {
@@ -64,30 +64,73 @@ resource "kubernetes_deployment" "xyz-demo-app" {
   }
 }
 
-# Define a load balancer (NLB) for our demo app.
-
-resource "kubernetes_service" "xyz-demo-elb" {
+# Kubernetes Ingress Resource for ALB via AWS Load Balancer Controller
+resource "kubernetes_ingress_v1" "xyz_demo_alb" {
   metadata {
-    name = "xyz-demo-elb-${var.env_name}"
+    name      = "xyz-demo-alb-${var.env_name}"
+    namespace = "default"
     annotations = {
-      "service.beta.kubernetes.io/aws-load-balancer-type"                     = "nlb"
-      "service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags" = "Terraform=true,Environment=${var.env_name}"
+      "kubernetes.io/ingress.class"                        = "alb"
+      "alb.ingress.kubernetes.io/scheme"                   = "internet-facing"
+      "alb.ingress.kubernetes.io/target-type"              = "ip"
+      "alb.ingress.kubernetes.io/listen-ports"             = "[{\"HTTP\": 80}]"
+      "alb.ingress.kubernetes.io/load-balancer-attributes" = "idle_timeout.timeout_seconds=60"
+      # "alb.ingress.kubernetes.io/subnets"                  = var.public_subnets
+      "alb.ingress.kubernetes.io/tags" = "Terraform=true,Environment=${var.env_name}"
     }
   }
+
+  spec {
+    rule {
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+
+          backend {
+            service {
+              name = kubernetes_service_v1.xyz_demo_svc.metadata[0].name
+              port {
+                number = 8080
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Kubernetes Service for the App
+resource "kubernetes_service_v1" "xyz_demo_svc" {
+  metadata {
+    name      = "xyz-demo-svc-${var.env_name}"
+    namespace = "default"
+    labels = {
+      app = local.appname
+    }
+  }
+
   spec {
     selector = {
-      App = kubernetes_deployment.xyz-demo-app.spec.0.template.0.metadata[0].labels.App
+      app = local.appname
     }
+
     port {
-      port        = 80
+      port        = 8080
       target_port = 8080
     }
 
-    type = "LoadBalancer"
+    type = "ClusterIP"
   }
 }
 
-output "lb_ip" {
-  description = "Load Balancer Endpoint"
-  value       = kubernetes_service.xyz-demo-elb.status.0.load_balancer.0.ingress.0.hostname
+output "alb_dns_name" {
+  description = "Application Load Balancer DNS Name"
+  value = (
+    length(kubernetes_ingress_v1.xyz_demo_alb.status) > 0 &&
+    length(kubernetes_ingress_v1.xyz_demo_alb.status[0].load_balancer) > 0 &&
+    length(kubernetes_ingress_v1.xyz_demo_alb.status[0].load_balancer[0].ingress) > 0
+  ) ? kubernetes_ingress_v1.xyz_demo_alb.status[0].load_balancer[0].ingress[0].hostname : "ALB is still provisioning"
 }
+
