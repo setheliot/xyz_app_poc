@@ -163,7 +163,7 @@ jobs:
 
       # Checks that all Terraform configuration files adhere to a canonical format
       - name: Terraform Format
-        run: terraform fmt -check
+        run: terraform fmt -check -recursive
 
       # If the workspace does not exist, then create it
       - name: Ensure workspace exists for this branch (for this environment)

@@ -1,3 +1,3 @@
-env_name         = "prod"
+env_name = "prod"
 
-workspace        = "main"
+workspace = "main"
