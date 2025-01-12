@@ -1,3 +1,3 @@
-env_name         = "stage"
+env_name = "stage"
 
-workspace        = "stage"
+workspace = "stage"

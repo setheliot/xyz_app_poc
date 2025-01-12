@@ -33,7 +33,7 @@ jobs:
     # run tests on mutliple versions of Python
     strategy:
       matrix:
-        python-version: [3.8, 3.9]
+        python-version: ["3.10", "3.11"]
 
     steps:
       # Checkout the code.
@@ -163,7 +163,7 @@ jobs:
 
       # Checks that all Terraform configuration files adhere to a canonical format
       - name: Terraform Format
-        run: terraform fmt -check
+        run: terraform fmt -check -recursive
 
       # If the workspace does not exist, then create it
       - name: Ensure workspace exists for this branch (for this environment)

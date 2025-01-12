@@ -23,7 +23,7 @@ The deployment is currently configured to deploy to a staging environment first 
 
 ![application](images/app.JPG)
 
-This is a very simple application written in Python using the Flask framework to run a webserver that returns "Hello, World!" and the node name.
+This is a simple "guestbook" application written in Python using the Flask framework. It runs a webserver that returns "Hello, World!" and the node name. It then prompts for a name and message, which is stored in a DynamoDB table after the user submits them.
 
 It is deployed with a desired replica count of 3 pods.
 

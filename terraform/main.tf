@@ -1,14 +1,14 @@
 # Define the app name
 locals {
-  appname = "XYZDemoApp-${var.env_name}"
+  app_name = "XYZDemoApp-${var.env_name}"
 }
 
 # This defines the kubernetes deployment for the XYZ app
-resource "kubernetes_deployment" "xyz-demo-app" {
+resource "kubernetes_deployment" "xyz_deployment_app" {
   metadata {
-    name = "xyz-demo-app-${var.env_name}"
+    name = "xyz-deployment-app-${var.env_name}"
     labels = {
-      App = local.appname
+      app = local.app_name
     }
   }
 
@@ -16,19 +16,19 @@ resource "kubernetes_deployment" "xyz-demo-app" {
     replicas = 3
     selector {
       match_labels = {
-        App = local.appname
+        app = local.app_name
       }
     }
     template {
       metadata {
         labels = {
-          App = local.appname
+          app = local.app_name
         }
       }
       spec {
         container {
           image = var.app_image
-          name  = "xyzdemoapp-container-${var.env_name}"
+          name  = "xyz-container-app-${var.env_name}"
 
           port {
             container_port = 80
@@ -64,30 +64,32 @@ resource "kubernetes_deployment" "xyz-demo-app" {
   }
 }
 
-# Define a load balancer (NLB) for our demo app.
-
-resource "kubernetes_service" "xyz-demo-elb" {
-  metadata {
-    name = "xyz-demo-elb-${var.env_name}"
-    annotations = {
-      "service.beta.kubernetes.io/aws-load-balancer-type"                     = "nlb"
-      "service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags" = "Terraform=true,Environment=${var.env_name}"
-    }
-  }
-  spec {
-    selector = {
-      App = kubernetes_deployment.xyz-demo-app.spec.0.template.0.metadata[0].labels.App
-    }
-    port {
-      port        = 80
-      target_port = 8080
-    }
-
-    type = "LoadBalancer"
-  }
+# Create ALB 
+# This is the usual path followed - use_lbc will usually be true
+module "lbc-alb" {
+  source   = "./modules/lbc-alb"
+  env_name = var.env_name
+  app_name = local.app_name
+  count    = var.use_lbc ? 1 : 0
 }
 
-output "lb_ip" {
-  description = "Load Balancer Endpoint"
-  value       = kubernetes_service.xyz-demo-elb.status.0.load_balancer.0.ingress.0.hostname
+output "alb_dns_name" {
+  value = var.use_lbc ? module.lbc-alb[0].alb_dns_name : "(ALB not provisioned)"
 }
+
+
+###############
+# Create NLB
+# This is the unuusual path
+# Uses the legacy Kubernetes service controller. Used for legacy testing
+module "legacy-nlb" {
+  source   = "./modules/legacy-nlb"
+  env_name = var.env_name
+  app_name = local.app_name
+  count    = var.use_lbc ? 0 : 1
+}
+
+output "nlb_dns_name" {
+  value = var.use_lbc ? "(This app uses an ALB)" : module.legacy-nlb[0].nlb_dns_name
+}
+
