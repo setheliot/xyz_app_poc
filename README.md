@@ -33,7 +33,7 @@ It is deployed with a desired replica count of 3 pods.
 
 The pipeline automation here currently only supports `stage` and `prod` environments.
 
-The AWS Region will be automatically configured to use the same one that the infrastrucure was deployed to for each environment respectively.
+The AWS Region will be automatically configured to use the same one that the infrastructure was deployed to for each environment respectively.
 
 Developers create their own `dev` branches to work in (using their own accounts as environments) and then create pull requests from these into `stage`
 
