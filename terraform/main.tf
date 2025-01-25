@@ -44,6 +44,13 @@ resource "kubernetes_deployment" "xyz_deployment_app" {
               memory = "50Mi"
             }
           }
+
+          # Mount the PVC as a volume in the container
+          volume_mount {
+            name       = "ebs-k8s-attached-storage"
+            mount_path = "/app/data" # Path inside the container
+          }
+
           # Add environment variable using Kubernetes Downward API to get node name
           env {
             name = "NODE_NAME"
@@ -59,8 +66,17 @@ resource "kubernetes_deployment" "xyz_deployment_app" {
             value = local.region # This is the region where the EKS cluster is deployed
           }
         } #container
-      }
-    }
+
+        # Define the volume using the PVC
+        volume {
+          name = "ebs-k8s-attached-storage"
+
+          persistent_volume_claim {
+            claim_name = "ebs-volume-claim" #TODO: fix hardcoded name
+          }
+        } #volume
+      }   #spec
+    }     #template
   }
 }
 
