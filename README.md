@@ -19,13 +19,21 @@ The deployment is currently configured to deploy to a staging environment first 
 | Staging             | stage      | stage      | The only source of pull requests into prod |
 | Development         | dev        | (varies)   | Created by developers for pull requests into stage. They use their own AWS accounts as environments. |
 
+## Deployment
+This repository uses Terraform to deploy
+* A Kubernetes `Deployment` that creates pods running the "guestbook" application. It is deployed with a desired replica count of 3 pods.
+* A choice of one of the following:
+  * AWS Application Load Balancer (ALB) created using the AWS Load Balancer Controller
+  * AWS Network Load Balancer (NLB) using the Amazon legacy Kubernetes service controller
+* A Kubernetes `PersistentVolume` (PV) using an Amazon Elastic Block Storage (EBS) volume
+
+![deployment](images/deployment.jpg)
+
 ## Application Design
 
 ![application](images/app.JPG)
 
 This is a simple "guestbook" application written in Python using the Flask framework. It runs a webserver that returns "Hello, World!" and the node name. It then prompts for a name and message, which is stored in a DynamoDB table after the user submits them.
-
-It is deployed with a desired replica count of 3 pods.
 
 ## CI/CD automation
 

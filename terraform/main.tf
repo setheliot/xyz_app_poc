@@ -96,7 +96,7 @@ output "alb_dns_name" {
 
 ###############
 # Create NLB
-# This is the unuusual path
+# This is the unusual path
 # Uses the legacy Kubernetes service controller. Used for legacy testing
 module "legacy-nlb" {
   source   = "./modules/legacy-nlb"
