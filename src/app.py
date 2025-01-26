@@ -22,7 +22,7 @@ region = get_region()
 log.info(f"Using region: {region}")
 dynamodb = boto3.resource('dynamodb', region_name=region)
 try:
-    table = dynamodb.Table('guestbook')
+    table = dynamodb.Table(os.getenv("DDB_TABLE", "guestbook"))
 except Exception as e:
     log.error(f"Error initializing DynamoDB table: {e}")
 
