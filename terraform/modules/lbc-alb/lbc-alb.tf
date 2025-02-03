@@ -5,7 +5,7 @@
 
 # This is the IngressClass created when Helm installed the AWS LBC
 locals {
-    ingress_class_name = "alb"
+  ingress_class_name = "alb"
 }
 
 # Kubernetes Ingress Resource for ALB via AWS Load Balancer Controller
