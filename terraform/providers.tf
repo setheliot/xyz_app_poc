@@ -14,18 +14,18 @@ terraform {
 # We use the remote backend state to retrieve the infrastructure outputs created by xyz_infra_poc
 # We must pull from the appropriate workspace that corresponds to the environment stage we are deploying
 # Terraform is weird and won't accept a `workspace` value in config, so instead we use it to form the S3 key
-data "terraform_remote_state" "infra" {
-  backend = "s3"
-  config = {
-    bucket = "seliot-terraform-state-bucket-arpio1"
-    key    = "env:/${var.workspace}/xyz_infra_poc/terraform.tfstate"
-    region = "us-east-1"
-  }
-}
+# data "terraform_remote_state" "infra" {
+#   backend = "s3"
+#   config = {
+#     bucket = "seliot-terraform-state-bucket-arpio1"
+#     key    = "env:/${var.workspace}/xyz_infra_poc/terraform.tfstate"
+#     region = "us-east-1"
+#   }
+# }
 
 # Get the AWS Region from the infrastructure remote backend state
 locals {
-  region = data.terraform_remote_state.infra.outputs.aws_region
+  region = "us-east-1"
 }
 
 # This tells Terraform which AWS region to look in for the EKS cluster
@@ -35,7 +35,7 @@ provider "aws" {
 
 # Using the cluster name from the remote backend state, we retrieve data about the EKS cluster
 data "aws_eks_cluster" "cluster" {
-  name = data.terraform_remote_state.infra.outputs.eks_cluster_name
+  name = "eks_cluster_2_cluster"
 }
 
 # Define the kubernetes provider using the data from the EKS cluster

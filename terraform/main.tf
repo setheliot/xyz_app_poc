@@ -45,11 +45,6 @@ resource "kubernetes_deployment" "xyz_deployment_app" {
             }
           }
 
-          # Mount the PVC as a volume in the container
-          volume_mount {
-            name       = "ebs-k8s-attached-storage"
-            mount_path = "/app/data" # Path inside the container
-          }
 
           # Add environment variable using Kubernetes Downward API to get node name
           env {
@@ -71,9 +66,6 @@ resource "kubernetes_deployment" "xyz_deployment_app" {
         volume {
           name = "ebs-k8s-attached-storage"
 
-          persistent_volume_claim {
-            claim_name = "ebs-volume-claim" #TODO: fix hardcoded name
-          }
         } #volume
       }   #spec
     }     #template
