@@ -13,22 +13,45 @@ app = Flask(__name__)
 def get_node_name():
     return os.getenv("NODE_NAME", "Unavailable")
 
+# Get pod name if defined
+def get_pod_name():
+    return os.getenv("KUBERNETES_POD_NAME", os.getenv("HOSTNAME", "Unknown-Pod"))
+
 # Function to get the AWS Region from the environment variable
 def get_region():
     return os.getenv("AWS_REGION", "us-east-1")
 
-# Initialize DynamoDB client
 region = get_region()
-log.info(f"Using region: {region}")
-dynamodb = boto3.resource('dynamodb', region_name=region)
-try:
-    table = dynamodb.Table(os.getenv("DDB_TABLE", "guestbook"))
-except Exception as e:
-    log.error(f"Error initializing DynamoDB table: {e}")
 
+# Initialize DynamoDB client
+def initialize_dynamodb():
+    log.info(f"Using region: {region}")
+    try:
+        dynamodb = boto3.resource('dynamodb', region_name=region)
+        table = dynamodb.Table(os.getenv("DDB_TABLE", "guestbook"))
+        return table, None
+    except Exception as e:
+        error = f"Error initializing DynamoDB table: {e}"
+        log.error(error)
+        return None, error
+
+table, _ = initialize_dynamodb()
 
 @app.route("/", methods=["GET", "POST"])
 def hello():
+    error = None
+
+    # Get the node and pod name for display
+    node_name = get_node_name()
+    pod_name = get_pod_name()
+
+    # If table did not properly initialize, then try again
+    global table
+    if not table:
+        table, error = initialize_dynamodb()
+        if not table:
+            return render_template('guestbook.html', node_name=node_name, pod_name=pod_name, region=region, entries=[], error=error)  # Pass the error
+
     if request.method == "POST":
         # Get the user input from the form
         name = request.form['name']
@@ -47,24 +70,23 @@ def hello():
                 }
             )
         except Exception as e:
-            log.error(f"Error writing to DynamoDB: {e}")
-        
+            error = f"Error writing to DynamoDB: {e}"
+            log.error(error)
+
         # Redirect to GET method to show updated guestbook
         return redirect(url_for('hello'))
-    
-    # Get the node name for display
-    node_name = get_node_name()
     
     # Retrieve all guestbook entries from DynamoDB
     try:
         response = table.scan()
         entries = response.get('Items', [])
     except Exception as e:
-        log.error(f"Error reading from DynamoDB: {e}")
+        error = f"Error reading from DynamoDB: {e}"
+        log.error(error)
         entries = []
     
     # Render the form with current guestbook entries
-    return render_template('guestbook.html', node_name=node_name, region=region, entries=entries)
+    return render_template('guestbook.html', node_name=node_name, pod_name=pod_name, region=region, entries=entries, error=error)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

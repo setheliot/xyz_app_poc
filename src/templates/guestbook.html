@@ -18,7 +18,8 @@
         </style>
     </head>
     <body>
-        <h2>Running on node: {{ node_name }}, in AWS Region: {{ region }}</h2>
+        <h2>Running on pod: {{ pod_name }}, on node: {{ node_name }}</h2>
+        <h2>In AWS Region: {{ region }}</h2>
         <h2><br/>Hello, World!  Please sign the guest book</h2>
         <form action="/" method="post">
             <label for="name">Name:</label>
@@ -39,6 +40,10 @@
             </ul>
         {% else %}
             <p>No entries yet.</p>
+        {% endif %}
+        {% if error %}
+            <hr>
+            <h4 style="color: red;">Error: {{ error }}</h4>
         {% endif %}
     </body>
 </html>

@@ -38,19 +38,15 @@ data "aws_eks_cluster" "cluster" {
   name = data.terraform_remote_state.infra.outputs.eks_cluster_name
 }
 
+# Data provider for cluster auth, used to get token
+data "aws_eks_cluster_auth" "cluster_auth" {
+  name = data.terraform_remote_state.infra.outputs.eks_cluster_name
+}
+
 # Define the kubernetes provider using the data from the EKS cluster
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args = [
-      "eks",
-      "get-token",
-      "--cluster-name",
-      data.aws_eks_cluster.cluster.name
-    ]
-  }
+  token                  = data.aws_eks_cluster_auth.cluster_auth.token
 }
 
