@@ -11,11 +11,11 @@ app = Flask(__name__)
 
 # Function to get the node name from the environment variable
 def get_node_name():
-    return os.getenv("NODE_NAME", "Unavailable")
+    return os.getenv("NODE_NAME", "Unknown node")
 
 # Get pod name if defined
 def get_pod_name():
-    return os.getenv("KUBERNETES_POD_NAME", os.getenv("HOSTNAME", "Unknown-Pod"))
+    return os.getenv("KUBERNETES_POD_NAME", os.getenv("HOSTNAME", "Unknown Pod"))
 
 # Function to get the AWS Region from the environment variable
 def get_region():

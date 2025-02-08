@@ -18,8 +18,21 @@
         </style>
     </head>
     <body>
-        <h2>Running on pod: {{ pod_name }}, on node: {{ node_name }}</h2>
-        <h2>In AWS Region: {{ region }}</h2>
+        <table border="1" cellpadding="8">
+            <tr>
+                <td>Pod Name</td>
+                <td><b>{{ pod_name }}</b></td>
+            </tr>
+            <tr>
+                <td>Node Name</td>
+                <td><b>{{ node_name }}</b></td>
+            </tr>
+            <tr>
+                <td>AWS Region</td>
+                <td><b>{{ region }}</b></td>
+            </tr>                        
+
+        </table>        
         <h2><br/>Hello, World!  Please sign the guest book</h2>
         <form action="/" method="post">
             <label for="name">Name:</label>
