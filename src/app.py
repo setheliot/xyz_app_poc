@@ -61,36 +61,39 @@ def append_to_ids_file(mount_path: str, content: str) -> bool:
             f.write(content + "\n")
         return True  # Successfully written
     except Exception as e:
-        print(f"Error writing to file {ids_file_path}: {e}")
+        log.error(f"Error writing to file {ids_file_path}: {e}")
         return False  # In case of an unexpected error
 
-def read_last_id(mount_path: str) -> str:
+def read_last_id(mount_path: str) -> tuple [str, str]:
     """
     Reads the last line from the 'ids' file inside the mount path if it exists.
     
-    - If the file exists, returns (True, last_line).
-    - If the file or mount path does not exist, returns (False, "").
+    - If the file exists, returns (last_line, None).
+    - If the file or mount path does not exist, returns (None, error_msg
 
     Args:
         mount_path (str): The path where the 'ids' file is expected.
 
     Returns:
-        tuple[bool, str]: (True, last_line) if successful, (False, "") if not found.
+        tuple[str, str]: (last_line, error message)
     """
+    error_msg = None
+
     ids_file_path = os.path.join(mount_path, ID_FILE)
 
     if not os.path.exists(ids_file_path):
-        return None # File does not exist
+        return None, f"file [{ids_file_path}] does not exist" # File does not exist
 
     try:
         with open(ids_file_path, "r") as f:
             lines = f.readlines()
             if lines:
-                return lines[-1].strip()  # Return last line without trailing newline
-            return None  # File exists but is empty
+                return lines[-1].strip(), None  # Return last line without trailing newline
+            return None, "File [{ids_file_path}] exists but is empty"  # File exists but is empty
     except Exception as e:
-        print(f"Error reading file {ids_file_path}: {e}")
-        return None  # In case of any unexpected error
+        error_msg = f"Error reading file {ids_file_path}: {e}"
+        log.error(error_msg)
+        return None, error_msg  # In case of any unexpected error
 
 
 
@@ -146,12 +149,12 @@ def hello():
         return redirect(url_for('hello'))
     
     # Retrieve last ID from PersistentVolume
-    last_id = read_last_id(PV_MOUNT_PATH)
+    last_id, error = read_last_id(PV_MOUNT_PATH)
     if last_id:
         pv_action = f"Last ID [{last_id}] read from PersistentVolume [{PV_MOUNT_PATH}]"
         log.info(pv_action)
     else:
-        pv_action = f"Could not read from PersistentVolume [{PV_MOUNT_PATH}]"
+        pv_action = f"Could not read from PersistentVolume [{PV_MOUNT_PATH}] - Reason: {error}"
         log.info(pv_action)
 
 
