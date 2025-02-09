@@ -35,11 +35,71 @@ def initialize_dynamodb():
         log.error(error)
         return None, error
 
+PV_MOUNT_PATH = "/app/data"
+ID_FILE = "guestbook_ids"
+
+def append_to_ids_file(mount_path: str, content: str) -> bool:
+    """
+    Checks if the mount_path exists.
+    - If it does, appends 'content' to a file named 'ids' inside the mount, creating it if necessary, and returns True.
+    - If the mount does not exist, returns False.
+
+    Args:
+        mount_path (str): The path to check for existence.
+        content (str): The string to append to the file.
+
+    Returns:
+        bool: True if the file was written, False if the mount path does not exist.
+    """
+    if not os.path.exists(mount_path):
+        return False  # Mount does not exist
+
+    ids_file_path = os.path.join(mount_path, ID_FILE)
+
+    try:
+        with open(ids_file_path, "a") as f:
+            f.write(content + "\n")
+        return True  # Successfully written
+    except Exception as e:
+        print(f"Error writing to file {ids_file_path}: {e}")
+        return False  # In case of an unexpected error
+
+def read_last_id(mount_path: str) -> str:
+    """
+    Reads the last line from the 'ids' file inside the mount path if it exists.
+    
+    - If the file exists, returns (True, last_line).
+    - If the file or mount path does not exist, returns (False, "").
+
+    Args:
+        mount_path (str): The path where the 'ids' file is expected.
+
+    Returns:
+        tuple[bool, str]: (True, last_line) if successful, (False, "") if not found.
+    """
+    ids_file_path = os.path.join(mount_path, ID_FILE)
+
+    if not os.path.exists(ids_file_path):
+        return None # File does not exist
+
+    try:
+        with open(ids_file_path, "r") as f:
+            lines = f.readlines()
+            if lines:
+                return lines[-1].strip()  # Return last line without trailing newline
+            return None  # File exists but is empty
+    except Exception as e:
+        print(f"Error reading file {ids_file_path}: {e}")
+        return None  # In case of any unexpected error
+
+
+
 table, _ = initialize_dynamodb()
 
 @app.route("/", methods=["GET", "POST"])
 def hello():
     error = None
+    pv_action = None
 
     # Get the node and pod name for display
     node_name = get_node_name()
@@ -60,6 +120,15 @@ def hello():
         # Generate a UUID
         guest_id = str(uuid.uuid4())
         
+        # write ID to PV
+        if append_to_ids_file(PV_MOUNT_PATH, guest_id):
+            pv_action = f"Successfully wrote ID [{guest_id}] to PersistentVolume [{PV_MOUNT_PATH}]"
+            log.info(pv_action)
+        else:
+            pv_action = f"Could not write to PersistentVolume [{PV_MOUNT_PATH}]"
+            log.info(pv_action)
+
+
         # Write to DynamoDB
         try:
             response = table.put_item(
@@ -76,6 +145,16 @@ def hello():
         # Redirect to GET method to show updated guestbook
         return redirect(url_for('hello'))
     
+    # Retrieve last ID from PersistentVolume
+    last_id = read_last_id(PV_MOUNT_PATH)
+    if last_id:
+        pv_action = f"Last ID [{last_id}] read from PersistentVolume [{PV_MOUNT_PATH}]"
+        log.info(pv_action)
+    else:
+        pv_action = f"Could not read from PersistentVolume [{PV_MOUNT_PATH}]"
+        log.info(pv_action)
+
+
     # Retrieve all guestbook entries from DynamoDB
     try:
         response = table.scan()
@@ -86,7 +165,7 @@ def hello():
         entries = []
     
     # Render the form with current guestbook entries
-    return render_template('guestbook.html', node_name=node_name, pod_name=pod_name, region=region, entries=entries, error=error)
+    return render_template('guestbook.html', node_name=node_name, pod_name=pod_name, region=region, entries=entries, pv_action=pv_action, error=error)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

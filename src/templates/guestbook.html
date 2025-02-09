@@ -33,7 +33,7 @@
             </tr>                        
 
         </table>        
-        <h2><br/>Hello, World!  Please sign the guest book</h2>
+        <h2><br/>Hello, World! 🌎 -- Please sign the guest book 📖</h2>
         <form action="/" method="post">
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required>
@@ -44,19 +44,37 @@
             <input type="submit" value="Submit">
         </form>
         
-        <h2>Current Guestbook Entries:</h2>
+        <h2>📖 Current Guestbook Entries:</h2>
         {% if entries %}
             <ul>
-                {% for entry in entries %}
-                    <li><strong>{{ entry['Name'] }}</strong>: {{ entry['Message'] }} (UUID: {{ entry['GuestID'] }})</li>
-                {% endfor %}
+                <table border="1" cellpadding="8">
+                    <tr>
+                        <th>👋 Name</th>
+                        <th>🍾 Message</th>
+                        <th>🔒 UUID</th>
+                    </tr>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry['Name'] }}</td>
+                        <td>{{ entry['Message'] }}</td>
+                        <td>{{ entry['GuestID'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>                
             </ul>
         {% else %}
             <p>No entries yet.</p>
+        {% endif %}
+        {% if pv_action %}
+            <h2>💾 PersistentVolume action:</h2>
+            <h4>{{pv_action}}</h4>
         {% endif %}
         {% if error %}
             <hr>
             <h4 style="color: red;">Error: {{ error }}</h4>
         {% endif %}
+        <hr>
+        🛠️ Help improve this sample app!<br/>
+        💻 Make Pull Requests here: <a href="https://github.com/setheliot/xyz_app_poc">https://github.com/setheliot/xyz_app_poc</a>
     </body>
 </html>
