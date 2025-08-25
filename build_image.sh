@@ -104,7 +104,7 @@ aws ecr create-repository --repository-name ${REPOSITORY_NAME} --region ${REGION
 if [ "$BUILD_TYPE" = "eks" ] || [ "$BUILD_TYPE" = "both" ]; then
     echo ""
     echo "Building EKS/Kubernetes image..."
-    docker build -f Dockerfile.eks -t ${REPOSITORY_NAME}:eks .
+    docker build -f Dockerfile -t ${REPOSITORY_NAME}:eks .
     
     # Tag and push with 'eks' tag
     docker tag ${REPOSITORY_NAME}:eks ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${REPOSITORY_NAME}:eks
@@ -116,7 +116,7 @@ fi
 if [ "$BUILD_TYPE" = "lambda" ] || [ "$BUILD_TYPE" = "both" ]; then
     echo ""
     echo "Building Lambda image..."
-    docker build -f Dockerfile.lambda -t ${REPOSITORY_NAME}:lambda .
+    docker build --platform linux/arm64 -f Dockerfile.lambda -t ${REPOSITORY_NAME}:lambda .
     
     # Tag and push with 'lambda' tag
     docker tag ${REPOSITORY_NAME}:lambda ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${REPOSITORY_NAME}:lambda
