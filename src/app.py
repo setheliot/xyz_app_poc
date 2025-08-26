@@ -13,9 +13,20 @@ app = Flask(__name__)
 def get_node_name():
     return os.getenv("NODE_NAME", "Unknown node")
 
-# Get pod name if defined
-def get_pod_name():
-    return os.getenv("KUBERNETES_POD_NAME", os.getenv("HOSTNAME", "Unknown Pod"))
+
+# Get host name if defined
+def get_host_name():
+    # Check for Kubernetes/pod environment
+    _pod_name = os.getenv("KUBERNETES_POD_NAME") or os.getenv("HOSTNAME")
+    if _pod_name:
+        return f"pod:{_pod_name}"
+    
+    # Check for Lambda environment
+    _lambda_name = os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+    if _lambda_name:
+        return f"lambda:{_lambda_name}"
+    
+    return "unknown host"
 
 # Function to get the AWS Region from the environment variable
 def get_region():
@@ -106,14 +117,14 @@ def hello():
 
     # Get the node and pod name for display
     node_name = get_node_name()
-    pod_name = get_pod_name()
+    host_name = get_host_name()
 
     # If table did not properly initialize, then try again
     global table
     if not table:
         table, error = initialize_dynamodb()
         if not table:
-            return render_template('guestbook.html', node_name=node_name, pod_name=pod_name, region=region, entries=[], error=error)  # Pass the error
+            return render_template('guestbook.html', node_name=node_name, host_name=host_name, region=region, entries=[], error=error)  # Pass the error
 
     if request.method == "POST":
         # Get the user input from the form
@@ -168,7 +179,7 @@ def hello():
         entries = []
     
     # Render the form with current guestbook entries
-    return render_template('guestbook.html', node_name=node_name, pod_name=pod_name, region=region, entries=entries, pv_action=pv_action, error=error)
+    return render_template('guestbook.html', node_name=node_name, host_name=host_name, region=region, entries=entries, pv_action=pv_action, error=error)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
