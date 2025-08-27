@@ -1,0 +1,20 @@
+# Ignore local Python venvs
+.venv/
+venv/
+ENV/
+__pycache__/
+*.pyc
+
+# Git + editor junk
+.git
+.gitignore
+*.swp
+*.log
+
+# OS cruft
+.DS_Store
+
+# Any build artifacts
+dist/
+build/
+
