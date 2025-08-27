@@ -216,5 +216,21 @@ def hello():
                            pv_action=pv_action, 
                            error=error)
 
+
+@app.errorhandler(404)
+def not_found(e):
+    details = {
+        "method": request.method,
+        "path": request.path,          # <-- what your app matched on
+        "full_path": request.full_path,
+        "base_url": request.base_url,
+        "url": request.url,
+        # Some adapters expose these; if present they’re handy to see:
+        "script_root": request.script_root,  # often ""
+    }
+    payload = {"message": "Not Found", "received": details}
+    return render_template("404.html", payload=payload), 404
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
