@@ -124,10 +124,17 @@ def read_last_id(mount_path: str) -> tuple [str, str]:
 
 table, _ = initialize_dynamodb()
 
-@app.route("/", methods=["GET", "POST"])
+# Allows us to set a different base path than "/" in case we want to use with an API Gateway stage
+BASE_PATH = os.getenv("BASE_PATH", "").strip("/")
+base_path = f"/{BASE_PATH}" if BASE_PATH else "/"
+
+log.info(f"Using base path: {base_path}")
+
+@app.route(base_path, methods=["GET", "POST"])
 def hello():
     error = None
     pv_action = None
+
 
     # Get the node and pod name for display
     node_name = get_node_name()
@@ -138,7 +145,12 @@ def hello():
     if not table:
         table, error = initialize_dynamodb()
         if not table:
-            return render_template('guestbook.html', node_name=node_name, host_name=host_name, region=region, entries=[], error=error)  # Pass the error
+            return render_template('guestbook.html', 
+                                   node_name=node_name, 
+                                   host_name=host_name, 
+                                   region=region, 
+                                   entries=[], 
+                                   error=error)  # Pass the error
 
     id_file_path = get_id_file_path()
 
@@ -196,7 +208,13 @@ def hello():
         entries = []
     
     # Render the form with current guestbook entries
-    return render_template('guestbook.html', node_name=node_name, host_name=host_name, region=region, entries=entries, pv_action=pv_action, error=error)
+    return render_template('guestbook.html', 
+                           node_name=node_name, 
+                           host_name=host_name, 
+                           region=region, 
+                           entries=entries, 
+                           pv_action=pv_action, 
+                           error=error)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
