@@ -48,6 +48,19 @@ def initialize_dynamodb():
 
 PV_MOUNT_PATH = "/app/data"
 ID_FILE = "guestbook_ids"
+LAMBDA_DIR = "/tmp"
+
+def get_id_file_path() -> str:
+
+    is_lambda = 'AWS_LAMBDA_FUNCTION_NAME' in os.environ
+
+    if is_lambda:
+        return_path = LAMBDA_DIR
+        log.info(f"Running on Lambda, adjusting mount path: {return_path}")
+        return return_path
+    else:
+        return PV_MOUNT_PATH
+
 
 def append_to_ids_file(mount_path: str, content: str) -> bool:
     """
@@ -63,7 +76,8 @@ def append_to_ids_file(mount_path: str, content: str) -> bool:
         bool: True if the file was written, False if the mount path does not exist.
     """
     if not os.path.exists(mount_path):
-        return False  # Mount does not exist
+        log.info(f"Path does not exist: {mount_path}")
+        return False  # Path does not exist
 
     ids_file_path = os.path.join(mount_path, ID_FILE)
 
@@ -80,7 +94,7 @@ def read_last_id(mount_path: str) -> tuple [str, str]:
     Reads the last line from the 'ids' file inside the mount path if it exists.
     
     - If the file exists, returns (last_line, None).
-    - If the file or mount path does not exist, returns (None, error_msg
+    - If the file or mount path does not exist, returns (None, error_msg)
 
     Args:
         mount_path (str): The path where the 'ids' file is expected.
@@ -126,6 +140,8 @@ def hello():
         if not table:
             return render_template('guestbook.html', node_name=node_name, host_name=host_name, region=region, entries=[], error=error)  # Pass the error
 
+    id_file_path = get_id_file_path()
+
     if request.method == "POST":
         # Get the user input from the form
         name = request.form['name']
@@ -133,13 +149,14 @@ def hello():
         
         # Generate a UUID
         guest_id = str(uuid.uuid4())
-        
+
+
         # write ID to PV
-        if append_to_ids_file(PV_MOUNT_PATH, guest_id):
-            pv_action = f"Successfully wrote ID [{guest_id}] to PersistentVolume [{PV_MOUNT_PATH}]"
+        if append_to_ids_file(id_file_path, guest_id):
+            pv_action = f"Successfully wrote ID [{guest_id}] to PersistentVolume [{id_file_path}]"
             log.info(pv_action)
         else:
-            pv_action = f"Could not write to PersistentVolume [{PV_MOUNT_PATH}]"
+            pv_action = f"Could not write to PersistentVolume [{id_file_path}]"
             log.info(pv_action)
 
 
@@ -160,12 +177,12 @@ def hello():
         return redirect(url_for('hello'))
     
     # Retrieve last ID from PersistentVolume
-    last_id, error = read_last_id(PV_MOUNT_PATH)
+    last_id, error = read_last_id(id_file_path)
     if last_id:
-        pv_action = f"Last ID [{last_id}] read from PersistentVolume [{PV_MOUNT_PATH}]"
+        pv_action = f"Last ID [{last_id}] read from PersistentVolume [{id_file_path}]"
         log.info(pv_action)
     else:
-        pv_action = f"Could not read from PersistentVolume [{PV_MOUNT_PATH}] - Reason: {error}"
+        pv_action = f"Could not read from PersistentVolume [{id_file_path}] - Reason: {error}"
         log.info(pv_action)
 
 

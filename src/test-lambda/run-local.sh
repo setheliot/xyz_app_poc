@@ -34,6 +34,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "🚀 Container '${CONTAINER_NAME}' starting"
+echo "📦 Image: ${ECR_IMAGE_URI}"
 URL="http://127.0.0.1:${BROWSER_PORT}/"
 echo "📝 Open: ${URL}"
 
