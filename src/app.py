@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for
+from urllib.parse import urlparse
 import os
 import uuid
 import boto3
@@ -89,12 +90,12 @@ def append_to_ids_file(mount_path: str, content: str) -> bool:
         log.error(f"Error writing to file {ids_file_path}: {e}")
         return False  # In case of an unexpected error
 
-def read_last_id(mount_path: str) -> tuple [str, str]:
+def read_last_id(mount_path: str) -> tuple[str | None, str | None]:
     """
     Reads the last line from the 'ids' file inside the mount path if it exists.
     
-    - If the file exists, returns (last_line, None).
-    - If the file or mount path does not exist, returns (None, error_msg)
+    - If the path exists, returns (last_line, None).
+    - If the mount path does not exist, returns (None, error_msg)
 
     Args:
         mount_path (str): The path where the 'ids' file is expected.
@@ -106,8 +107,11 @@ def read_last_id(mount_path: str) -> tuple [str, str]:
 
     ids_file_path = os.path.join(mount_path, ID_FILE)
 
+    if not os.path.exists(mount_path):
+        return None, f"file [{mount_path}] does not exist" # Path does not exist
+    
     if not os.path.exists(ids_file_path):
-        return None, f"file [{ids_file_path}] does not exist" # File does not exist
+        append_to_ids_file(mount_path, "new file")
 
     try:
         with open(ids_file_path, "r") as f:
@@ -120,7 +124,11 @@ def read_last_id(mount_path: str) -> tuple [str, str]:
         log.error(error_msg)
         return None, error_msg  # In case of any unexpected error
 
-
+def bare_url(url: str) -> str:
+    parts = urlparse(url)
+    # parts.scheme = "http"
+    # parts.netloc = "127.0.0.1:8080"
+    return f"{parts.scheme}://{parts.netloc}/"
 
 table, _ = initialize_dynamodb()
 
@@ -219,6 +227,7 @@ def hello():
 
 @app.errorhandler(404)
 def not_found(e):
+    redirect_url = f"{bare_url(request.base_url)}{BASE_PATH}"
     details = {
         "method": request.method,
         "path": request.path,          # <-- what your app matched on
@@ -229,7 +238,7 @@ def not_found(e):
         "script_root": request.script_root,  # often ""
     }
     payload = {"message": "Not Found", "received": details}
-    return render_template("404.html", payload=payload), 404
+    return render_template("404.html", payload=payload, redirect_url=redirect_url), 404
 
 
 if __name__ == "__main__":
