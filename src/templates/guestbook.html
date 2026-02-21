@@ -54,6 +54,7 @@
                         <th>Name</th>
                         <th>Message</th>
                         <th>UUID</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,6 +63,7 @@
                         <td>{{ entry['Name'] }}</td>
                         <td>{{ entry['Message'] }}</td>
                         <td>{{ entry['GuestID'] }}</td>
+                        <td><a href="{{ url_for('hello', action='delete', guest_id=entry['GuestID']) }}" style="color: red; text-decoration: none;">&#x2715;</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>

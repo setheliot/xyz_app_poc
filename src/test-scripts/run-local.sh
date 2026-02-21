@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
+
+# This script pulls the latest container image from ECR and runs it locally for testing.
+# It runs the container built to run on Lambda, but locally using Docker.
+
+
 set -euo pipefail
 
 REPOSITORY_NAME="${REPOSITORY_NAME:-guestbook-app}"
 IMAGE_TAG="${IMAGE_TAG:-lambda}" 
-DDB_TABLE="${DDB_TABLE:-guestbook}"
+DDB_TABLE="${DDB_TABLE:-guestbook-entries-demo}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 NODE_NAME="${NODE_NAME:-local-test}"
 CONTAINER_NAME="${CONTAINER_NAME:-guestbook-local-test}"
@@ -14,6 +19,17 @@ ECR_IMAGE_URI="${ECR_REG:+${ECR_REG}/${REPOSITORY_NAME}:${IMAGE_TAG}}"
 
 # sanity check
 docker image inspect "$ECR_IMAGE_URI" >/dev/null 2>&1 || { echo "Image not found: $ECR_IMAGE_URI"; exit 1; }
+
+# AWS Credentials (optional, for local testing with real AWS)
+if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+    echo "🔑 Using AWS credentials from environment variables"
+else
+    echo "🔑 Getting credentials from AWS CLI or default credentials file."
+    if ! eval "$(aws configure export-credentials --format env)"; then
+        echo "⚠️  No AWS credentials found. The container may not work properly if it needs to access AWS services."
+    fi
+fi
+
 
 BROWSER_PORT="8080"
 CONTAINER_PORT="8080"
