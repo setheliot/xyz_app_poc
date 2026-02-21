@@ -219,7 +219,7 @@ def hello():
     # Retrieve all guestbook entries from DynamoDB
     try:
         response = table.scan()
-        entries = response.get('Items', [])
+        entries = sorted(response.get('Items', []), key=lambda e: e.get('Name', '').lower())
     except Exception as e:
         error = f"Error reading from DynamoDB: {e}"
         log.error(error)
